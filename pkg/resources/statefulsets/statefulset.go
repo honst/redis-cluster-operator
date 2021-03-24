@@ -176,7 +176,6 @@ func ClusterHeadlessSvcName(name string, i int) string {
 
 func getRedisCommand(cluster *redisv1alpha1.DistributedRedisCluster, password *corev1.EnvVar) []string {
 	cmd := []string{
-		"/conf/fix-ip.sh",
 		"redis-server",
 		"/conf/redis.conf",
 		"--cluster-enabled yes",
@@ -246,7 +245,7 @@ func redisServerContainer(cluster *redisv1alpha1.DistributedRedisCluster, passwo
 			},
 		},
 		VolumeMounts: volumeMounts(),
-		Command:      getRedisCommand(cluster, password),
+		Command:	[]string{"/usr/local/bin/docker-entrypoint.sh"},
 		LivenessProbe: &corev1.Probe{
 			InitialDelaySeconds: graceTime,
 			TimeoutSeconds:      5,
@@ -281,6 +280,10 @@ func redisServerContainer(cluster *redisv1alpha1.DistributedRedisCluster, passwo
 						FieldPath: "status.podIP",
 					},
 				},
+			},
+			{
+				Name: "REDIS_COMMAND",
+				Value: strings.Join(getRedisCommand(cluster, password), " "),
 			},
 		},
 		Resources: *cluster.Spec.Resources,
